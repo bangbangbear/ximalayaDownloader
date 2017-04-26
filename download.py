@@ -13,8 +13,7 @@ ids = re.search('sound_ids=\"(.*)\"', resp.read()).group(1).split(',')
 for ind, f in enumerate(ids):
     url = 'http://www.ximalaya.com/tracks/{}.json'.format(f)
     resp = urllib2.urlopen(urllib2.Request(url, headers=headers))
-    jsondata = resp.read()
-    data = json.loads(jsondata)
+    data = json.loads(resp.read())
     output = data['title'] + data['play_path_64'][-4:]
     print output, data['play_path_64']
     with open(output, 'wb') as local:
