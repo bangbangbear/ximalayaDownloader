@@ -3,6 +3,7 @@
 from urllib2 import urlopen, Request
 import json
 import re
+import sys
 
 
 class XmlyDownloader(object):
@@ -13,19 +14,38 @@ class XmlyDownloader(object):
         resp = urlopen(Request(url, headers=self.headers))
         return re.search('sound_ids=\"(.*)\"', resp.read()).group(1).split(',')
 
-    def download_file(self, ID):
+    def getFileInfo(self, ID):
         url = 'http://www.ximalaya.com/tracks/{}.json'.format(ID)
+        data = json.loads(urlopen(Request(url, headers=self.headers)).read())
+        filename = data['title'] + data['play_path_64'][-4:]
+        return filename, data['play_path_64']
+
+    def download_file(self, fname, url):
         resp = urlopen(Request(url, headers=self.headers))
-        data = json.loads(resp.read())
-        output = data['title'] + data['play_path_64'][-4:]
-        print output, data['play_path_64']
-        with open(output, 'wb') as local:
-            local.write(urlopen(data['play_path_64']).read())
+        total = int(resp.info().getheader('Content-Length').strip())
+        chunk_size = 102400 # 100KB
+        downloaded = 0
+
+        with open(fname, 'wb') as local:
+            while True:
+                readback = resp.read(chunk_size)
+                downloaded += len(readback)
+                percent = int(100 * downloaded / total)
+                sys.stdout.write('\r[{}{}]'.format('█' * percent, ' ' * (100-percent)))
+                sys.stdout.flush()
+                if not readback:
+                    break
+                else:
+                    local.write(readback)
+
+        sys.stdout.write('\r')
+        sys.stdout.flush()
 
     def download_album(self, album_url):
         for ID in self.getIDs(album_url):
-            self.download_file(ID)
-
+            file_name, file_url = self.getFileInfo(ID)
+            print file_name, file_url
+            self.download_file(file_name, file_url)
 
 if __name__ == '__main__':
     album_url = 'http://www.ximalaya.com/7712455/album/4474664'
