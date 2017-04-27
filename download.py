@@ -38,7 +38,7 @@ class XmlyDownloader(object):
                 else:
                     local.write(readback)
 
-        sys.stdout.write('\r{}\r'.format(' '*102)
+        sys.stdout.write('\r{}\r'.format(' '*102))
         sys.stdout.flush()
 
     def download_album(self, album_url):
