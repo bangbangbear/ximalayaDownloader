@@ -10,6 +10,10 @@ class XmlyDownloader(object):
     def __init__(self):
         self.headers = {'User-Agent': 'Safari/537.36'}
 
+    def getTotalSoundCount(self, url):
+        resp = urlopen(Request(url, headers=self.headers))
+        return re.search('<span class=\"albumSoundcount\">\((.*)\)</span>', resp.read()).group(1)
+
     def getIDs(self, url):
         resp = urlopen(Request(url, headers=self.headers))
         return re.search('sound_ids=\"(.*)\"', resp.read()).group(1).split(',')
@@ -37,7 +41,6 @@ class XmlyDownloader(object):
                     break
                 else:
                     local.write(readback)
-
         sys.stdout.write('\r{}\r'.format(' '*102))
         sys.stdout.flush()
 
@@ -48,6 +51,9 @@ class XmlyDownloader(object):
             self.download_file(file_name, file_url)
 
 if __name__ == '__main__':
-    album_url = 'http://www.ximalaya.com/7712455/album/4474664'
+    album_url = sys.argv[1]
     xmly = XmlyDownloader()
-    xmly.download_album(album_url)
+    totalSound = int(xmly.getTotalSoundCount(album_url))
+    totalPage = (totalSound-1)/100 + 1
+    for i in range(1, totalPage + 1):
+        xmly.download_album(album_url + '?page={}'.format(i))
